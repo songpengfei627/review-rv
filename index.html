@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>餐厅评论</title>
+  <title>餐厅语音评论</title>
   <style>
     :root{
       --bg:#f8f9fa;          /* 浅色背景 */
@@ -14,6 +14,7 @@
       --muted:#dee2e6;       /* 分隔/边框 */
       --accent:#28a745;      /* 强调色 */
       --danger:#dc3545;      /* 错误提示 */
+      --gutter: 16px;        /* 统一左右边距（可按需调大）*/
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -21,16 +22,16 @@
     .app{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column}
     header{position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--muted);}
     .safe{padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
-    .head{display:flex; align-items:center; gap:12px; padding:14px 16px 12px;}
+    .head{display:flex; align-items:center; gap:12px; padding:14px calc(var(--gutter) + env(safe-area-inset-right)) 12px calc(var(--gutter) + env(safe-area-inset-left));}
     .logo{width:40px; height:40px; border-radius:12px; background:var(--brand)}
     .title-wrap{flex:1}
     h1{margin:0; font-size:18px}
     .meta{font-size:12px; color:var(--sub); display:flex; gap:10px; align-items:center}
     .star{color:#ffc107}
 
-    main{padding:8px 14px 24px}
+    main{padding:8px calc(var(--gutter) + env(safe-area-inset-right)) 24px calc(var(--gutter) + env(safe-area-inset-left));}
 
-    .filter{display:flex; gap:8px; padding:8px 2px 12px; overflow:auto; scrollbar-width:none}
+    .filter{display:flex; gap:8px; padding:8px calc(var(--gutter) + env(safe-area-inset-right)) 12px calc(var(--gutter) + env(safe-area-inset-left)); overflow:auto; scrollbar-width:none; scroll-padding-left: calc(var(--gutter) + env(safe-area-inset-left));}
     .chip{padding:8px 12px; font-size:12px; border:1px solid var(--muted); border-radius:999px; color:var(--sub); background:#f8f9fa}
     .chip.active{border-color:var(--brand); color:var(--brand); background:#e9f5ff}
 
@@ -45,7 +46,9 @@
 
     .audio{margin-top:10px; background:#f1f3f5; border:1px solid var(--muted); border-radius:14px; padding:10px; position:relative}
     .controls{display:flex; align-items:center; gap:10px}
-    .play{width:36px; height:36px; border-radius:50%; border:none; outline:none; display:grid; place-items:center; background:var(--brand); color:#fff; cursor:pointer; font-size:16px}
+    .play{width:36px; height:36px; border-radius:50%; border:none; outline:none; display:grid; place-items:center; background:var(--brand); color:#fff; cursor:pointer}
+    /* 使用 svg 图标避免各系统字体的“▶”光学偏心 */
+    .play svg{width:18px; height:18px; display:block; /* 轻微右移进行光学居中校正 */ transform: translateX(1px);} 
     .play[disabled]{opacity:.5; cursor:not-allowed}
 
     .track{flex:1}
@@ -61,7 +64,6 @@
     .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
     .thumb{width:100%; aspect-ratio:1/1; border-radius:10px; border:1px solid var(--muted); background:#f8f9fa; overflow:hidden; position:relative; cursor:pointer}
     .thumb img{width:100%; height:100%; object-fit:cover; display:block}
-    .thumb .ph{position:absolute; inset:0; display:grid; place-items:center; color:#adb5bd; font-size:12px}
 
     /* 全屏图片查看 */
     .viewer{position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:50}
@@ -248,3 +250,4 @@
 </body>
 
 </html>
+
