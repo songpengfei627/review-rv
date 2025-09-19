@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>餐厅评论</title>
+  <style>
+    :root{
+      --bg:#f8f9fa;          /* 浅色背景 */
+      --card:#ffffff;        /* 卡片底色 */
+      --text:#212529;        /* 主文字 */
+      --sub:#6c757d;         /* 次级文字 */
+      --brand:#007bff;       /* 品牌蓝 */
+      --muted:#dee2e6;       /* 分隔/边框 */
+      --accent:#28a745;      /* 强调色 */
+      --danger:#dc3545;      /* 错误提示 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; background:var(--bg); color:var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;}
+    .app{max-width:520px; margin:0 auto; min-height:100%; display:flex; flex-direction:column}
+    header{position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--muted);}
+    .safe{padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+    .head{display:flex; align-items:center; gap:12px; padding:14px 16px 12px;}
+    .logo{width:40px; height:40px; border-radius:12px; background:var(--brand)}
+    .title-wrap{flex:1}
+    h1{margin:0; font-size:18px}
+    .meta{font-size:12px; color:var(--sub); display:flex; gap:10px; align-items:center}
+    .star{color:#ffc107}
+
+    main{padding:8px 14px 24px}
+
+    .filter{display:flex; gap:8px; padding:8px 2px 12px; overflow:auto; scrollbar-width:none}
+    .chip{padding:8px 12px; font-size:12px; border:1px solid var(--muted); border-radius:999px; color:var(--sub); background:#f8f9fa}
+    .chip.active{border-color:var(--brand); color:var(--brand); background:#e9f5ff}
+
+    .card{background:var(--card); border:1px solid var(--muted); border-radius:16px; padding:12px; margin:10px 0; box-shadow:0 2px 6px rgba(0,0,0,0.05)}
+    .row{display:flex; gap:12px}
+    .avatar{width:40px; height:40px; border-radius:50%; background:#e9ecef; display:grid; place-items:center; color:#495057; font-weight:700}
+    .who{flex:1}
+    .who .name{font-size:14px; font-weight:600}
+    .who .sub{font-size:12px; color:var(--sub)}
+    .who .tags{margin-top:4px; display:flex; flex-wrap:wrap; gap:6px}
+    .tag{font-size:10px; padding:4px 8px; border-radius:999px; border:1px solid var(--muted); color:#6c757d}
+
+    .audio{margin-top:10px; background:#f1f3f5; border:1px solid var(--muted); border-radius:14px; padding:10px; position:relative}
+    .controls{display:flex; align-items:center; gap:10px}
+    .play{width:36px; height:36px; border-radius:50%; border:none; outline:none; display:grid; place-items:center; background:var(--brand); color:#fff; cursor:pointer; font-size:16px}
+    .play[disabled]{opacity:.5; cursor:not-allowed}
+
+    .track{flex:1}
+    .bar{height:6px; border-radius:999px; background:#dee2e6; overflow:hidden; position:relative}
+    .prog{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--brand))}
+    .time{display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:6px}
+
+    .status{font-size:12px; color:var(--sub)}
+    .status.missing{color:var(--danger)}
+
+    /* 图片区域 */
+    .photos{margin-top:10px}
+    .grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:6px}
+    .thumb{width:100%; aspect-ratio:1/1; border-radius:10px; border:1px solid var(--muted); background:#f8f9fa; overflow:hidden; position:relative; cursor:pointer}
+    .thumb img{width:100%; height:100%; object-fit:cover; display:block}
+    .thumb .ph{position:absolute; inset:0; display:grid; place-items:center; color:#adb5bd; font-size:12px}
+
+    /* 全屏图片查看 */
+    .viewer{position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:50}
+    .viewer img{max-width:92vw; max-height:86vh; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.4)}
+    .viewer.show{display:flex}
+
+    footer{color:var(--sub); font-size:12px; text-align:center; padding:24px 8px 32px}
+    .spacer{height: env(safe-area-inset-bottom)}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="safe">
+      <div class="head">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="title-wrap">
+          <h1>X餐厅</h1>
+          <div class="meta">
+            <span class="star">★ ★ ★ ★ ☆</span>
+            <span>4.3 · 182 条评论</span>
+            <span>·</span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      <div class="filter" role="tablist" aria-label="筛选">
+        <div class="chip active" role="tab" aria-selected="true">全部</div>
+        <div class="chip" role="tab">环境好</div>
+        <div class="chip" role="tab">上菜快</div>
+        <div class="chip" role="tab">适合聚会</div>
+        <div class="chip" role="tab">服务佳</div>
+      </div>
+    </header>
+
+    <main id="list"></main>
+
+
+  </div>
+
+  <!-- 图片查看器 -->
+  <div class="viewer" id="viewer" aria-hidden="true">
+    <img alt="预览" id="viewerImg" />
+  </div>
+
+  <template id="card-tpl">
+    <article class="card" data-id="">
+      <div class="row">
+        <div class="avatar" aria-hidden="true">🎧</div>
+        <div class="who">
+          <div class="name">访客</div>
+          <div class="sub">
+            <span class="date">2025-09-17</span>
+            · <span class="stars">★★★★★</span>
+          </div>
+          <div class="tags"></div>
+        </div>
+      </div>
+
+      <div class="audio" role="group" aria-label="语音评论">
+        <div class="controls">
+          <button class="play" aria-label="播放" title="播放">▶</button>
+          <div class="track">
+            <div class="bar"><div class="prog"></div></div>
+            <div class="time"><span class="cur">00:00</span><span class="dur">--:--</span></div>
+          </div>
+        </div>
+        <div class="status missing">未上传音频</div>
+      </div>
+
+      <!-- 图片区域（若无图片将自动隐藏） -->
+      <div class="photos">
+        <div class="grid"></div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+    // —————————— 手写数组（每条都可单独改），无“上传测试音频”按钮 ——————————
+    const reviews = [
+      { id:1, name:"用户 1", date:"2025-09-17", stars:"★★★★★", tags:["适合聚会"], audioSrc:"voice/1-1.mp3", durationHint:null, photos:["image/1-1.jpg"] },
+      { id:2, name:"用户 2", date:"2025-09-17", stars:"★★★★☆", tags:["上菜快","环境好"], audioSrc:null, durationHint:null, photos:[] },
+      { id:3, name:"用户 3", date:"2025-09-17", stars:"★★★☆☆", tags:["适合聚会"], audioSrc:null, durationHint:null, photos:[] },
+      { id:4, name:"用户 4", date:"2025-09-17", stars:"★★★★★", tags:["上菜快","环境好"], audioSrc:null, durationHint:null, photos:[] },
+      { id:5, name:"用户 5", date:"2025-09-17", stars:"★★★★☆", tags:["适合聚会"], audioSrc:null, durationHint:null, photos:[] },
+      { id:6, name:"用户 6", date:"2025-09-17", stars:"★★★☆☆", tags:["上菜快","环境好"], audioSrc:null, durationHint:null, photos:[] },
+      { id:7, name:"用户 7", date:"2025-09-17", stars:"★★★★★", tags:["适合聚会"], audioSrc:null, durationHint:null, photos:[] },
+      { id:8, name:"用户 8", date:"2025-09-17", stars:"★★★★☆", tags:["上菜快","环境好"], audioSrc:null, durationHint:null, photos:[] },
+      { id:9, name:"用户 9", date:"2025-09-17", stars:"★★★☆☆", tags:["适合聚会"], audioSrc:null, durationHint:null, photos:[] },
+      { id:10, name:"用户 10", date:"2025-09-17", stars:"★★★★★", tags:["上菜快","环境好"], audioSrc:null, durationHint:null, photos:[] }
+    ];
+
+    // 将秒数格式化为 mm:ss
+    const fmt = s=>{ if(!Number.isFinite(s)) return "--:--"; const m=String(Math.floor(s/60)).padStart(2,'0'); const ss=String(Math.floor(s%60)).padStart(2,'0'); return `${m}:${ss}`; };
+
+    const $list = document.getElementById('list');
+    const tpl = document.getElementById('card-tpl');
+
+    let currentAudio = null; // 确保同一时间只有一个在播
+
+    function createCard(data){
+      const node = tpl.content.cloneNode(true);
+      const card = node.querySelector('.card');
+      card.dataset.id = data.id;
+      card.querySelector('.name').textContent = data.name;
+      card.querySelector('.date').textContent = data.date;
+      card.querySelector('.stars').textContent = data.stars;
+      const tagsWrap = card.querySelector('.tags');
+      data.tags.forEach(t=>{ const span=document.createElement('span'); span.className='tag'; span.textContent=t; tagsWrap.appendChild(span); });
+
+      // 音频
+      const playBtn = card.querySelector('.play');
+      const curEl = card.querySelector('.cur');
+      const durEl = card.querySelector('.dur');
+      const progEl = card.querySelector('.prog');
+      const statusEl = card.querySelector('.status');
+
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      if(data.audioSrc){ audio.src = data.audioSrc; }
+
+      const noAudio = !data.audioSrc;
+      playBtn.disabled = noAudio;
+      statusEl.classList.toggle('missing', noAudio);
+      statusEl.textContent = noAudio ? '未上传音频' : '可播放';
+      if(data.durationHint) durEl.textContent = fmt(data.durationHint);
+
+      // 元数据加载
+      audio.addEventListener('loadedmetadata', ()=>{ durEl.textContent = fmt(audio.duration); });
+
+      // 只允许单条同时播放
+      function pauseOthers(){
+        if(currentAudio && currentAudio!==audio){ currentAudio.pause(); currentAudio.__btn && (currentAudio.__btn.textContent='▶'); }
+        currentAudio = audio; currentAudio.__btn = playBtn;
+      }
+
+      // 播放/暂停
+      playBtn.addEventListener('click', async ()=>{
+        if(audio.paused){
+          pauseOthers();
+          try{ await audio.play(); playBtn.textContent='❚❚'; }
+          catch(e){ console.warn(e); }
+        } else { audio.pause(); playBtn.textContent='▶'; }
+      });
+
+      // 进度与结束
+      audio.addEventListener('timeupdate', ()=>{ curEl.textContent = fmt(audio.currentTime); const ratio = audio.duration? (audio.currentTime / audio.duration) : 0; progEl.style.width = `${(ratio*100).toFixed(2)}%`; });
+      audio.addEventListener('ended', ()=>{ playBtn.textContent='▶'; progEl.style.width='0%'; curEl.textContent='00:00'; });
+
+      // 点击进度条跳转
+      const bar = card.querySelector('.bar');
+      bar.addEventListener('click', (e)=>{ if(!audio.duration) return; const rect = bar.getBoundingClientRect(); const ratio = (e.clientX - rect.left)/rect.width; audio.currentTime = Math.max(0, Math.min(audio.duration, ratio*audio.duration)); });
+
+      // 图片
+      const photosWrap = card.querySelector('.photos');
+      const grid = card.querySelector('.photos .grid');
+      if(Array.isArray(data.photos) && data.photos.length){
+        data.photos.forEach((src,idx)=>{
+          const box = document.createElement('div');
+          box.className = 'thumb';
+          const img = document.createElement('img');
+          img.alt = `图片${idx+1}`; img.src = src;
+          box.appendChild(img);
+          box.addEventListener('click', ()=> openViewer(src));
+          grid.appendChild(box);
+        });
+      } else {
+        photosWrap.style.display = 'none';
+      }
+
+      return node;
+    }
+
+    // 渲染列表
+    reviews.forEach(r=>{ $list.appendChild(createCard(r)); });
+
+    // 简易图片查看器
+    const viewer = document.getElementById('viewer');
+    const viewerImg = document.getElementById('viewerImg');
+    function openViewer(src){ viewerImg.src = src; viewer.classList.add('show'); viewer.setAttribute('aria-hidden','false'); }
+    viewer.addEventListener('click', ()=>{ viewer.classList.remove('show'); viewer.setAttribute('aria-hidden','true'); viewerImg.removeAttribute('src'); });
+
+    // 使用说明：直接在 reviews 中为某条设置 audioSrc 和 photos 即可。
+  </script>
+</body>
+</html>
